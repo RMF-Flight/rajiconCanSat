@@ -1,0 +1,97 @@
+#include "BluetoothSerial.h"
+#include "SparkFun_TB6612.h"
+//#include "UnitV.h"//カメラ使う場合
+
+//esp32(本体側)のプログラムです
+
+
+//モータドライバ
+#define AIN1 14//5
+#define BIN1 32//19
+#define AIN2 27//18
+#define BIN2 33//21
+#define PWMA 12//14
+#define PWMB 25//27
+#define STBY 26//23
+
+const float time_30=0.5;//30ド回る
+const float time_90=1.5;//90ド回る
+const float time_10=0.1666;//10ド回る
+
+const int offsetA = 1;
+const int offsetB = 1;
+
+char ch;
+
+//カメラ用
+int16_t data[4];
+int area = 0;
+double per = 0.0;
+int max_area = 240 * 320;
+double Cameratheta = 0.0;
+double x,y;
+float xf,yf;
+bool Cameraflag = false;
+double Cameradist = 0;
+int count30=0;
+int count10=0;
+int sayucount=0;//コーンを認識するときに左右に交互に回るための値
+
+
+//モータドライバ
+Motor motor1 = Motor(AIN1, AIN2, PWMA, offsetA, STBY);
+Motor motor2 = Motor(BIN1, BIN2, PWMB, offsetB, STBY);
+
+
+#if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
+#error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
+#endif
+
+BluetoothSerial SerialBT;
+
+void setup() {
+  Serial.begin(115200);
+  SerialBT.begin("ESP32test"); //Bluetooth device name
+  Serial.println("The device started, now you can pair it with bluetooth!");
+  // Sign for the end of bluetooth setup.
+  //何かblueを受け取ったサインを出すと良いかも
+}
+
+void loop() {
+  if (SerialBT.available()) {
+    ch=SerialBT.read();
+    if (ch == 'L') {
+      left(motor1, motor2, 255);
+      Serial.println("Left");
+      delay(10);  
+     //digitalWrite(LED_PIN, HIGH);
+    }else if (ch == 'R') {
+      
+      right(motor1, motor2, 255);
+      Serial.println("Right");
+      delay(10);  
+     //digitalWrite(LED_PIN, HIGH);
+    }else if (ch == 'F') {
+      forward(motor1, motor2, 255);
+      Serial.println("Forward");
+      delay(10);  
+     //digitalWrite(LED_PIN, HIGH);
+    }else if (ch == 'B') {
+      back(motor1, motor2, 255);
+      Serial.println("Back");
+      delay(10);  
+     //digitalWrite(LED_PIN, HIGH);
+    }else if (ch == 'C') {
+      brake(motor1, motor2);
+      Serial.println("Camera");
+      delay(10);
+     //digitalWrite(LED_PIN, HIGH);
+    }else{
+      brake(motor1, motor2);
+      delay(10);
+    }
+  delay(20);
+
+  
+}
+}
